@@ -1516,6 +1516,21 @@
   const iconPlay = document.getElementById('icon-play');
   const iconPause = document.getElementById('icon-pause');
   audio.volume = 0.25;
+
+  // Autoplay al primo gesto utente (click o scroll)
+  function startOnInteraction() {
+    audio.play().then(() => {
+      btn.classList.add('playing');
+      iconPlay.style.display = 'none';
+      iconPause.style.display = 'block';
+    }).catch(() => {});
+    document.removeEventListener('click', startOnInteraction);
+    document.removeEventListener('scroll', startOnInteraction);
+    document.removeEventListener('keydown', startOnInteraction);
+  }
+  document.addEventListener('click', startOnInteraction);
+  document.addEventListener('scroll', startOnInteraction);
+  document.addEventListener('keydown', startOnInteraction);
   function toggleAudio() {
     if (audio.paused) {
       audio.play();
