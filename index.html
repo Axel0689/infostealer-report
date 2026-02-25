@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INFOSTEALER — Threat Intelligence Report 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080a0e;
+    --surface: #0d1117;
+    --surface2: #131920;
+    --border: #1e2a35;
+    --accent: #ff3c3c;
+    --accent2: #ff7a00;
+    --accent3: #00d4ff;
+    --text: #e8edf2;
+    --text-dim: #7a8a9a;
+    --text-muted: #3d4f5e;
+    --green: #00ff88;
+    --yellow: #ffcc00;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Outfit', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+    opacity: .4;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px 60px;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,60,60,.12) 0%, transparent 70%);
+    top: -200px; right: -200px;
+    animation: pulse 6s ease-in-out infinite;
+  }
+  .hero-glow2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,255,.08) 0%, transparent 70%);
+    bottom: 0; left: -100px;
+    animation: pulse 8s ease-in-out infinite reverse;
+  }
+
+  @keyframes pulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: .7; }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .15em;
+    color: var(--accent);
+    border: 1px solid rgba(255,60,60,.3);
+    padding: 6px 14px;
+    border-radius: 2px;
+    margin-bottom: 32px;
+    width: fit-content;
+    animation: fadeInDown .6s ease both;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:.2; } }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(52px, 8vw, 110px);
+    font-weight: 800;
+    line-height: .9;
+    letter-spacing: -.02em;
+    animation: fadeInUp .8s ease both .1s;
+  }
+  h1 span.red { color: var(--accent); }
+  h1 span.dim { color: var(--text-muted); }
+
+  .hero-sub {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 28px;
+    max-width: 560px;
+    line-height: 1.8;
+    animation: fadeInUp .8s ease both .25s;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 60px;
+    animation: fadeInUp .8s ease both .4s;
+  }
+  .hstat {
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+  }
+  .hstat-num {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .hstat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 60px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .15em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 1s ease both 1s;
+  }
+  .scroll-hint::before {
+    content: '';
+    display: block;
+    width: 40px; height: 1px;
+    background: var(--text-muted);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 20px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(8,10,14,.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .2em;
+    color: var(--text-dim);
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--text-muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 100px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: var(--display);
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin-bottom: 48px;
+  }
+
+  /* ── THREAT ANATOMY (cards) ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .card {
+    background: var(--surface);
+    padding: 32px;
+    transition: background .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .card:hover { background: var(--surface2); }
+  .card:hover::before { opacity: 1; }
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .card-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* ── FAMILIES TABLE ── */
+  .families-container {
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .families-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 3fr;
+    gap: 0;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+  }
+  .fh {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .family-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 3fr;
+    gap: 0;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    transition: background .2s;
+    cursor: default;
+    align-items: center;
+  }
+  .family-row:last-child { border-bottom: none; }
+  .family-row:hover { background: var(--surface2); }
+  .family-name {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .threat-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .threat-critical { background: rgba(255,60,60,.15); color: var(--accent); border: 1px solid rgba(255,60,60,.3); }
+  .threat-high { background: rgba(255,122,0,.12); color: var(--accent2); border: 1px solid rgba(255,122,0,.3); }
+  .threat-medium { background: rgba(255,204,0,.1); color: var(--yellow); border: 1px solid rgba(255,204,0,.25); }
+  .family-share {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .family-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .it-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    background: rgba(0,212,255,.1);
+    color: var(--accent3);
+    border: 1px solid rgba(0,212,255,.2);
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-left: 8px;
+    letter-spacing: .1em;
+    vertical-align: middle;
+  }
+
+  /* ── STATS DASHBOARD ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1px;
+  }
+  .stats-grid2 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+  .stat-box {
+    background: var(--surface);
+    padding: 36px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-box:hover { background: var(--surface2); }
+  .stat-num {
+    font-family: var(--display);
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .stat-num.red { color: var(--accent); }
+  .stat-num.orange { color: var(--accent2); }
+  .stat-num.blue { color: var(--accent3); }
+  .stat-num.green { color: var(--green); }
+  .stat-num.yellow { color: var(--yellow); }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .stat-source {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .stat-corner {
+    position: absolute;
+    bottom: 16px; right: 16px;
+    font-size: 32px;
+    opacity: .06;
+  }
+
+  /* ── INFECTION CHAIN ── */
+  .chain-container {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .chain-step {
+    flex: 1;
+    min-width: 160px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 20px;
+    position: relative;
+    text-align: center;
+    transition: background .2s;
+  }
+  .chain-step:hover { background: var(--surface2); }
+  .chain-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--accent);
+    z-index: 2;
+    background: var(--bg);
+    padding: 0 4px;
+  }
+  .chain-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: .1em;
+    margin-bottom: 12px;
+  }
+  .chain-icon { font-size: 28px; margin-bottom: 12px; }
+  .chain-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .chain-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--green);
+    margin-top: 10px;
+  }
+  .chain-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ── VECTORS ── */
+  .vectors-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .vector-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s;
+  }
+  .vector-card:hover { border-color: rgba(255,60,60,.4); }
+  .vector-number {
+    font-family: var(--mono);
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--text-muted);
+    position: absolute;
+    right: 16px;
+    top: 8px;
+    line-height: 1;
+    opacity: .3;
+  }
+  .vector-title {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .vector-title .accent { color: var(--accent); }
+  .vector-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    position: relative;
+  }
+  .vector-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    background: rgba(255,60,60,.1);
+    color: var(--accent);
+    border: 1px solid rgba(255,60,60,.2);
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-top: 16px;
+    letter-spacing: .1em;
+  }
+
+  /* ── CASE STUDY ── */
+  .case-study {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .case-study::before {
+    content: 'CASE STUDY';
+    position: absolute;
+    top: 20px; right: 28px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    color: var(--text-muted);
+  }
+  .case-title {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .case-subtitle {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 36px;
+  }
+  .case-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-top: 32px;
+  }
+  .case-step {
+    border-top: 2px solid var(--border);
+    padding-top: 20px;
+  }
+  .case-step-num {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: .4;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .case-step-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .case-lesson {
+    margin-top: 32px;
+    background: rgba(255,60,60,.05);
+    border: 1px solid rgba(255,60,60,.15);
+    padding: 20px 24px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .case-lesson strong { color: var(--accent); }
+
+  /* ── DEFENSE MATRIX ── */
+  .defense-tabs {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+  .dtab {
+    flex: 1;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: none;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+  }
+  .dtab:last-child { border-right: none; }
+  .dtab.active {
+    background: var(--surface2);
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+  }
+  .dtab:hover:not(.active) { color: var(--text); background: var(--surface2); }
+
+  .defense-content {
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 40px;
+    background: var(--surface);
+    display: none;
+  }
+  .defense-content.active { display: block; }
+  .defense-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .defense-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .defense-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .defense-item-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .defense-item-text strong { color: var(--text); }
+
+  /* ── OPERATIONS TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 40px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    padding: 0 0 48px 40px;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 8px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .tl-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+  }
+  .tl-title {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .tl-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 700px;
+  }
+  .tl-result {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .tl-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    padding: 4px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 2px;
+  }
+  .tl-pill.ok { background: rgba(0,255,136,.07); border-color: rgba(0,255,136,.2); color: var(--green); }
+  .tl-pill.warn { background: rgba(255,122,0,.07); border-color: rgba(255,122,0,.2); color: var(--accent2); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .footer-text a {
+    color: var(--accent3);
+    text-decoration: none;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── COUNTER ANIMATION ── */
+  .count-up { display: inline; }
+
+  /* ── PROGRESS BAR ── */
+  .bar-container {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .bar-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    width: 140px;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0;
+    transition: width 1.4s cubic-bezier(.2,1,.3,1);
+    border-radius: 0;
+  }
+  .bar-pct {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 60px;
+  }
+
+  /* ── AUDIO PLAYER ── */
+  #audio-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 2000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color .2s, color .2s, transform .2s;
+    backdrop-filter: blur(12px);
+  }
+  #audio-btn:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.08); }
+  #audio-btn.playing { border-color: var(--accent); color: var(--accent); }
+  #audio-btn svg { width: 18px; height: 18px; fill: currentColor; }
+  #audio-label {
+    position: fixed;
+    bottom: 38px;
+    right: 90px;
+    z-index: 2000;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity .3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  #audio-btn:hover ~ #audio-label,
+  #audio-btn.playing ~ #audio-label { opacity: 1; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    section { padding: 60px 24px; }
+    #hero { padding: 80px 24px 50px; }
+    .hero-stats { flex-wrap: wrap; gap: 24px; }
+    .scroll-hint { left: 24px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stats-grid2 { grid-template-columns: 1fr 1fr; }
+    .vectors-layout { grid-template-columns: 1fr; }
+    .case-steps { grid-template-columns: 1fr 1fr; }
+    .defense-items { grid-template-columns: 1fr; }
+    .families-header, .family-row { grid-template-columns: 2fr 1fr; }
+    .fh:nth-child(3), .fh:nth-child(4) { display: none; }
+    .family-row > *:nth-child(3), .family-row > *:nth-child(4) { display: none; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+    .divider { margin: 0 24px; }
+    .chain-container { flex-direction: column; }
+    .chain-step:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -20px; transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span>//</span> INFOSTEALER INTEL</div>
+  <ul class="nav-links">
+    <li><a href="#threat">Minaccia</a></li>
+    <li><a href="#famiglie">Famiglie</a></li>
+    <li><a href="#dati">Statistiche</a></li>
+    <li><a href="#vettori">Vettori</a></li>
+    <li><a href="#difesa">Difesa</a></li>
+    <li><a href="#operazioni">Operazioni</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero" style="max-width:100%; padding: 100px 60px 80px;">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="badge">
+    <span class="badge-dot"></span>
+    THREAT INTELLIGENCE REPORT — AGGIORNATO FEB 2026
+  </div>
+
+  <h1>
+    INFO<span class="red">STEALER</span><br>
+    <span class="dim">IL NUOVO</span><br>
+    <span class="red">ORO NERO</span>
+  </h1>
+
+  <p class="hero-sub">
+    Non un semplice malware. Il motore dell'intera economia criminale digitale.<br>
+    Fonti: ACN · IBM X-Force · Flashpoint · SpyCloud · Kaspersky · Microsoft MDDR 2025
+  </p>
+
+  <div class="hero-stats">
+    <div class="hstat">
+      <div class="hstat-num">2,1 MLD</div>
+      <div class="hstat-label">Credenziali rubate nel 2024</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-num">32%</div>
+      <div class="hstat-label">Di tutte le violazioni globali</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-num">66%</div>
+      <div class="hstat-label">Vittime con antivirus attivo</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-num">4,88M€</div>
+      <div class="hstat-label">Costo medio per violazione</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">SCROLL PER ESPLORARE</div>
+</section>
+
+<hr class="divider">
+
+<!-- 1. ANATOMIA DELLA MINACCIA -->
+<section id="threat">
+  <div class="reveal">
+    <div class="section-label">01 — Anatomia della minaccia</div>
+    <h2 class="section-title">Cosa rubano<br>gli infostealer</h2>
+  </div>
+
+  <div class="cards-grid reveal">
+    <div class="card">
+      <div class="card-icon">🔑</div>
+      <div class="card-title">Credenziali Browser</div>
+      <div class="card-text">Password salvate, cookie di sessione, token di autenticazione, dati di compilazione automatica, numeri di carte di credito da Chrome, Firefox, Edge e tutti i browser Chromium.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🪙</div>
+      <div class="card-title">Wallet Crypto</div>
+      <div class="card-text">MetaMask, Exodus, Electrum e oltre 50 estensioni browser per criptovalute. Rhadamanthys usa l'OCR con IA per estrarre seed phrase dalle immagini.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌐</div>
+      <div class="card-title">Accessi VPN & FTP</div>
+      <div class="card-text">Credenziali FileZilla, WinSCP, Cyberduck, profili VPN aziendali. Queste ultime sono le più preziose: permettono l'accesso diretto alle reti corporate.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📱</div>
+      <div class="card-title">App & Messaggistica</div>
+      <div class="card-text">Sessioni Telegram, Discord, Signal, Steam. Client email Outlook e Thunderbird. Password manager KeePass e RoboForm se non adeguatamente protetti.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Sistema & Clipboard</div>
+      <div class="card-text">Screenshot del desktop in tempo reale, contenuto degli appunti (spesso include password copiate), hardware ID e dettaglio completo del software di sicurezza installato.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📂</div>
+      <div class="card-title">File & Documenti</div>
+      <div class="card-text">PDF, file Office, immagini, proprietà intellettuale — sulla base di regole personalizzabili dall'operatore. Inclusi tutti i dettagli del sistema operativo e del software installato.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 2. INFECTION CHAIN -->
+<section>
+  <div class="reveal">
+    <div class="section-label">02 — Catena di infezione</div>
+    <h2 class="section-title">Tutto accade<br>in meno di 60 secondi</h2>
+  </div>
+
+  <div class="chain-container reveal">
+    <div class="chain-step">
+      <div class="chain-num">STEP 01</div>
+      <div class="chain-icon">🎣</div>
+      <div class="chain-title">Distribuzione</div>
+      <div class="chain-text">Phishing, software piratato, video YouTube, CAPTCHA fake, malvertising</div>
+    </div>
+    <div class="chain-step">
+      <div class="chain-num">STEP 02</div>
+      <div class="chain-icon">⚡</div>
+      <div class="chain-title">Esecuzione</div>
+      <div class="chain-text">Process hollowing, DLL sideloading, LOLBins (PowerShell, mshta.exe). Bypass AMSI in memoria</div>
+      <div class="chain-time">T+0s</div>
+    </div>
+    <div class="chain-step">
+      <div class="chain-num">STEP 03</div>
+      <div class="chain-icon">🔍</div>
+      <div class="chain-title">Profilazione</div>
+      <div class="chain-text">OS, IP, software installato, strumenti di sicurezza presenti, lingua del sistema</div>
+      <div class="chain-time">T+2s</div>
+    </div>
+    <div class="chain-step">
+      <div class="chain-num">STEP 04</div>
+      <div class="chain-icon">🗄️</div>
+      <div class="chain-title">Raccolta dati</div>
+      <div class="chain-text">Query SQL ai database SQLite del browser, decript DPAPI, scan wallet, screenshot</div>
+      <div class="chain-time">T+5–20s</div>
+    </div>
+    <div class="chain-step">
+      <div class="chain-num">STEP 05</div>
+      <div class="chain-icon">📤</div>
+      <div class="chain-title">Esfiltrazione</div>
+      <div class="chain-text">Log ZIP → C2 via HTTPS, Telegram Bot API, Discord webhook, Mega.nz</div>
+      <div class="chain-time">T+30–60s</div>
+    </div>
+    <div class="chain-step">
+      <div class="chain-num">STEP 06</div>
+      <div class="chain-icon">💨</div>
+      <div class="chain-title">Auto-eliminazione</div>
+      <div class="chain-text">Il malware si cancella. Nessuna traccia. La vittima non si accorge di nulla</div>
+      <div class="chain-time">T+60s</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 3. FAMIGLIE -->
+<section id="famiglie">
+  <div class="reveal">
+    <div class="section-label">03 — Principali famiglie</div>
+    <h2 class="section-title">Chi opera sul campo</h2>
+  </div>
+
+  <div class="families-container reveal">
+    <div class="families-header">
+      <div class="fh">Famiglia</div>
+      <div class="fh">Livello</div>
+      <div class="fh">Quota globale</div>
+      <div class="fh">Note</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">LummaC2 <span class="it-tag">🇮🇹 #1 IT</span></div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">Storm-2477 · Russia · da 2022</div>
+      </div>
+      <div><span class="threat-badge threat-critical">CRITICO</span></div>
+      <div class="family-share">31%</div>
+      <div class="family-desc">Da &lt;1% a dominatore globale in 12 mesi. 10M infezioni stimate FBI. EtherHiding su blockchain. Disrupt. maggio 2025 (2.300 domini), sviluppatore latitante Russia.</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">RedLine Stealer <span class="it-tag">🇮🇹 #2 IT</span></div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">Russia · Rudometov · da 2020</div>
+      </div>
+      <div><span class="threat-badge threat-high">ALTO</span></div>
+      <div class="family-share">57%→13%</div>
+      <div class="family-desc">Ex-dominatore assoluto. Smantellato Operazione Magnus ott. 2024. Oltre 1 miliardo di credenziali rubate. Ancora al 2° posto per il contesto italiano (ACN 2025).</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">Rhadamanthys</div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">kingcrete2022 · C++ · da ago 2022</div>
+      </div>
+      <div><span class="threat-badge threat-critical">CRITICO</span></div>
+      <div class="family-share">Top 5</div>
+      <div class="family-desc">Il più sofisticato. VM obfuscation, OCR AI per seed phrase crypto, 30 algoritmi crack wallet. Operazione Endgame Fase 2 (nov. 2025): 1.025 server sequestrati.</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">RisePro</div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">fork Vidar · C++ · da 2022</div>
+      </div>
+      <div><span class="threat-badge threat-high">ALTO</span></div>
+      <div class="family-share">19,9%</div>
+      <div class="family-desc">Distribuito tramite PrivateLoader (pay-per-install). Colpito dall'Operazione Secure (inizio 2025). Secondo per diffusione globale nel 2024.</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">StealC <span class="it-tag">🇮🇹 #4 IT</span></div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">Plymouth · da gen 2023</div>
+      </div>
+      <div><span class="threat-badge threat-high">ALTO</span></div>
+      <div class="family-share">17,4%</div>
+      <div class="family-desc">In forte crescita post-Magnus. V2 (mar. 2025): C2 cifrato RC4, payload PowerShell. Principale stealer nelle campagne ClickFix con CAPTCHA falsi.</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">Vidar Stealer <span class="it-tag">🇮🇹 #5 IT</span></div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">fork Arkei · da 2018</div>
+      </div>
+      <div><span class="threat-badge threat-high">ALTO</span></div>
+      <div class="family-share">17%</div>
+      <div class="family-desc">V2.0 rilasciata ott. 2025: riscritta in C, multi-thread, bypass AppBound Chrome. Tra le famiglie più attive su utenti italiani (ACN 2025).</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">DcRat <span class="it-tag">🇮🇹 #3 IT</span></div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">RAT ibrido · .NET</div>
+      </div>
+      <div><span class="threat-badge threat-medium">MEDIO</span></div>
+      <div class="family-share">Top 3 IT</div>
+      <div class="family-desc">Particolarmente rilevante nel contesto italiano (3° per impatto su credenziali italiane, ACN 2025). RAT con capacità stealer integrate.</div>
+    </div>
+
+    <div class="family-row">
+      <div>
+        <div class="family-name">Raccoon Stealer</div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px;">Sokolovsky (UC) · da 2019</div>
+      </div>
+      <div><span class="threat-badge threat-medium">MEDIO</span></div>
+      <div class="family-share">Top 5 globale</div>
+      <div class="family-desc">Sviluppatore condannato a 5 anni USA (ott. 2024). 52M credenziali rubate. Operazione riavviata da co-cospiratori. Ancora in top 5 globale per credenziali compromesse (ACN 2025).</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px;" class="reveal">
+    <div class="section-label" style="margin-bottom: 24px;">Distribuzione quote mercato globale 2024</div>
+    <div class="bar-container">
+      <div class="bar-label">LummaC2</div>
+      <div class="bar-track"><div class="bar-fill" data-pct="31"></div></div>
+      <div class="bar-pct">31%</div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">RisePro</div>
+      <div class="bar-track"><div class="bar-fill" data-pct="20"></div></div>
+      <div class="bar-pct">19,9%</div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">StealC</div>
+      <div class="bar-track"><div class="bar-fill" data-pct="17"></div></div>
+      <div class="bar-pct">17,4%</div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Vidar</div>
+      <div class="bar-track"><div class="bar-fill" data-pct="17"></div></div>
+      <div class="bar-pct">17%</div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">RedLine (post-Magnus)</div>
+      <div class="bar-track"><div class="bar-fill" data-pct="13"></div></div>
+      <div class="bar-pct">13%</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 4. STATISTICHE -->
+<section id="dati">
+  <div class="reveal">
+    <div class="section-label">04 — Statistiche chiave</div>
+    <h2 class="section-title">I numeri<br>della crisi</h2>
+  </div>
+
+  <div class="stats-grid reveal">
+    <div class="stat-box">
+      <div class="stat-num red">2,1 MLD</div>
+      <div class="stat-label">Credenziali rubate nel 2024 dagli infostealer</div>
+      <div class="stat-source">Flashpoint · 2024</div>
+      <div class="stat-corner">🔑</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num orange">500 MLN</div>
+      <div class="stat-label">Dispositivi compromessi nel 2023 a livello globale</div>
+      <div class="stat-source">ACN · Feb 2026</div>
+      <div class="stat-corner">💻</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num blue">16 MLD+</div>
+      <div class="stat-label">Password trapelate in un singolo dump — giu. 2025</div>
+      <div class="stat-source">SpyCloud · 2025</div>
+      <div class="stat-corner">📡</div>
+    </div>
+  </div>
+  <div class="stats-grid2 reveal">
+    <div class="stat-box">
+      <div class="stat-num yellow">66%</div>
+      <div class="stat-label">Dei dispositivi infetti aveva antivirus o EDR attivo</div>
+      <div class="stat-source">Kaspersky · 2024</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num red">54%</div>
+      <div class="stat-label">Delle vittime ransomware aveva credenziali già nei log</div>
+      <div class="stat-source">Verizon DBIR · 2025</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num green">50,9</div>
+      <div class="stat-label">Credenziali rubate in media per ogni dispositivo infetto</div>
+      <div class="stat-source">Kaspersky · 2024</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num orange">4,88M€</div>
+      <div class="stat-label">Costo medio globale per violazione dati</div>
+      <div class="stat-source">IBM Cost of Breach · 2024</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 5. VETTORI DI INFEZIONE -->
+<section id="vettori">
+  <div class="reveal">
+    <div class="section-label">05 — Vettori di infezione</div>
+    <h2 class="section-title">Come entra<br>l'infostealer</h2>
+  </div>
+
+  <div class="vectors-layout reveal">
+    <div class="vector-card">
+      <div class="vector-number">01</div>
+      <div class="vector-title"><span class="accent">Phishing</span> &amp; Spear-phishing</div>
+      <div class="vector-text">Il vettore dominante. Email di finte comunicazioni bancarie, servizi cloud o tool aziendali con allegati malevoli (PDF, Office con macro, HTML) o link a siti compromessi. Lo spear-phishing costruisce messaggi iper-personalizzati su ruoli chiave e supply chain. IBM X-Force registra un aumento dell'<strong>84% anno su anno</strong> nelle email di phishing con infostealer.</div>
+      <span class="vector-tag">VETTORE DOMINANTE</span>
+    </div>
+
+    <div class="vector-card">
+      <div class="vector-number">02</div>
+      <div class="vector-title">Software <span class="accent">Contraffatto</span></div>
+      <div class="vector-text">Crack, keygen, cheat per videogiochi (Fortnite, Valorant), attivatori KMS per Windows piratato, versioni false di Adobe, AutoCAD, FL Studio. Su YouTube vengono caricati <strong>5-10 video di crack ogni ora</strong>. L'utente viene convinto a "disattivare temporaneamente Windows Defender" prima dell'esecuzione.</div>
+      <span class="vector-tag">ALTA EFFICACIA CONSUMER</span>
+    </div>
+
+    <div class="vector-card">
+      <div class="vector-number">03</div>
+      <div class="vector-title"><span class="accent">ClickFix</span> — Fake CAPTCHA</div>
+      <div class="vector-text">Tecnica emersa nel 2024. La vittima atterra su un sito che mostra un CAPTCHA falso (imita Google o Cloudflare). Cliccando "Non sono un robot", un JavaScript copia silenziosamente un <strong>comando PowerShell negli appunti</strong>. L'utente viene guidato a premere Win+R, Ctrl+V, Invio. Esecuzione fileless, elude i sandbox perché richiede interazione umana.</div>
+      <span class="vector-tag">INNOVAZIONE 2024–2025</span>
+    </div>
+
+    <div class="vector-card">
+      <div class="vector-number">04</div>
+      <div class="vector-title">Malvertising &amp; <span class="accent">SEO Poisoning</span></div>
+      <div class="vector-text">Inserzioni malevole su Google Ads e Bing Ads portano a siti che sembrano legittimi. Il SEO poisoning posiziona siti malevoli ai primi posti di ricerca per query ad alta intenzione come "download software". Microsoft ha rilevato la campagna Storm-0408 che ha colpito quasi <strong>1 milione di dispositivi</strong> globali in pochi mesi.</div>
+      <span class="vector-tag">CRESCITA RAPIDA</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 6. CASE STUDY ACN -->
+<section>
+  <div class="reveal">
+    <div class="section-label">06 — Il punto cieco: case study ACN/CSIRT Italia</div>
+  </div>
+
+  <div class="case-study reveal">
+    <div class="case-title">Ente di ricerca colpito da ransomware</div>
+    <div class="case-subtitle">Come credenziali rubate 6 mesi prima hanno abilitato un attacco ransomware — fonte: CSIRT Italia / ACN "Infostealer – Caratteristiche della minaccia e raccomandazioni" (feb. 2026)</div>
+
+    <div class="case-steps">
+      <div class="case-step">
+        <div class="case-step-num">01</div>
+        <div class="case-step-text">Il <strong>laptop personale</strong> di un dipendente viene infettato da un infostealer. L'ente non ne è a conoscenza.</div>
+      </div>
+      <div class="case-step">
+        <div class="case-step-num">02</div>
+        <div class="case-step-text">Le <strong>credenziali VPN aziendali</strong> salvate nel browser del laptop vengono rubate e inserite in un log. Il dipendente usava quel PC per accedere sporadicamente alla VPN.</div>
+      </div>
+      <div class="case-step">
+        <div class="case-step-num">03</div>
+        <div class="case-step-text">Il log viene <strong>venduto sul mercato criminale</strong>, poi diffuso gratuitamente. Un operatore ransomware acquista l'accesso verificato tramite un Initial Access Broker.</div>
+      </div>
+      <div class="case-step">
+        <div class="case-step-num">04</div>
+        <div class="case-step-text"><strong>6 mesi dopo</strong> l'infezione originaria, l'ente viene colpito da ransomware. Server e client cifrati. L'indagine forense rivela che la postazione aziendale era pulita: il vettore era il PC personale.</div>
+      </div>
+    </div>
+
+    <div class="case-lesson">
+      <strong>Lezione chiave (ACN):</strong> chi diffonde il malware e chi lancia il ransomware sono due attori distinti, ma collegati dal valore dei log. Il "paziente zero" non è quasi mai un exploit zero-day, ma una combinazione di cattive abitudini digitali, dispositivi personali non protetti e mancanza di visibilità sui log che circolano nell'ecosistema criminale. Le credenziali rubate restano armi attive per anni se non vengono ruotate — vedi anche Jaguar Land Rover (credenziali 2021 usate nel 2025) e Snowflake (credenziali 2020 mai ruotate).
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 7. DIFESA -->
+<section id="difesa">
+  <div class="reveal">
+    <div class="section-label">07 — Difesa</div>
+    <h2 class="section-title">Come proteggersi:<br>modello ACN a 3 livelli</h2>
+  </div>
+
+  <div class="reveal">
+    <div class="defense-tabs">
+      <button class="dtab active" onclick="showTab('base')">Baseline</button>
+      <button class="dtab" onclick="showTab('mid')">Maturità Intermedia</button>
+      <button class="dtab" onclick="showTab('adv')">Maturità Avanzata</button>
+      <button class="dtab" onclick="showTab('ind')">Individui</button>
+    </div>
+
+    <div id="tab-base" class="defense-content active">
+      <div class="defense-items">
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>MFA obbligatoria</strong> per tutti i servizi esposti su Internet, in particolare accessi VPN e account privilegiati</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Politiche strutturate</strong> per password robuste, gestione delle utenze e deprovisioning tempestivo degli account</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Formazione continua</strong> su phishing, download sicuri e rischi legati all'uso di device personali per accessi aziendali</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Monitoraggio di rete</strong> e log endpoint con capacità minime di rilevazione anomalie — connessioni inusuali verso Telegram, file-sharing, Mega.nz</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-mid" class="defense-content">
+      <div class="defense-items">
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Principio del privilegio minimo:</strong> separazione tra account admin e account quotidiani, no admin permanenti</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Protezione email avanzata:</strong> SPF, DKIM/DMARC, sandboxing allegati, filtri antiphishing con AI comportamentale</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Policy di esecuzione:</strong> limitare PowerShell, bloccare esecuzione da directory %TEMP%, application whitelisting su sistemi critici</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>EDR + detection comportamentale</strong> per intercettare pattern tipici di collection ed esfiltrazione — non solo signature-based</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-adv" class="defense-content">
+      <div class="defense-items">
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Autenticazione basata su certificati</strong> per accessi critici + passkey FIDO2 resistenti al phishing</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Cyber Threat Intelligence</strong> per monitorare la presenza di credenziali aziendali nei marketplace criminali (Russian Market, canali Telegram)</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Device Bound Session Credentials (DBSC)</strong> — Chrome 135+: vincola crittograficamente i token di sessione al TPM, rendendo i cookie rubati inutilizzabili</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Chiusura porte/protocolli non necessari:</strong> RDP, Telnet, Microsoft RPC, FTP — riducono le possibilità di escalation post-accesso iniziale</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-ind" class="defense-content">
+      <div class="defense-items">
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Mai salvare password nel browser:</strong> usa un password manager dedicato (Bitwarden, 1Password, KeePass) con crittografia a master password</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Abilita MFA ovunque</strong> (email, social, banking, VPN) — preferibilmente con app authenticator, non SMS</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Scarica software solo da fonti ufficiali.</strong> Evita crack, keygen, "free trial" non ufficiali e link in descrizioni YouTube</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Attenzione ai CAPTCHA insoliti:</strong> nessun sito legittimo ti chiede di aprire la finestra Esegui (Win+R) o di copiare comandi nel terminale</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Aggiorna regolarmente</strong> sistema operativo, browser e applicazioni — riduci la superficie d'attacco per exploit drive-by</div>
+        </div>
+        <div class="defense-item">
+          <div class="defense-dot"></div>
+          <div class="defense-item-text"><strong>Verifica le tue credenziali</strong> su haveibeenpwned.com e usa il Malwarebytes Digital Footprint Portal per sapere se sei nei log Lumma</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 8. OPERAZIONI FORZE DELL'ORDINE -->
+<section id="operazioni">
+  <div class="reveal">
+    <div class="section-label">08 — Risposta delle forze dell'ordine</div>
+    <h2 class="section-title">Operazioni<br>di contrasto</h2>
+  </div>
+
+  <div class="timeline reveal">
+
+    <div class="tl-item">
+      <div class="tl-date">APRILE 2023</div>
+      <div class="tl-title">Operazione Cookie Monster — Genesis Market</div>
+      <div class="tl-text">Guidata da FBI e Polizia olandese con Europol e 17+ paesi. Genesis Market era il marketplace pionieristico del "plug-and-play" criminale con 460.000 bot e 1,5 milioni di PC compromessi in vendita.</div>
+      <div class="tl-result">
+        <span class="tl-pill ok">~120 arresti globali</span>
+        <span class="tl-pill ok">208 perquisizioni</span>
+        <span class="tl-pill warn">Amministratori non catturati</span>
+        <span class="tl-pill warn">Dark web ripreso in 2 settimane</span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">OTTOBRE 2024</div>
+      <div class="tl-title">Operazione Magnus — RedLine &amp; MetaStealer</div>
+      <div class="tl-text">Polizia olandese, FBI, Eurojust, Europol, NCA britannica. Sequestro di 3 server nei Paesi Bassi, codice sorgente completo, server di licenze, bot Telegram. Incriminato Maxim Rudometov (Russia) — fino a 35 anni. ESET ha identificato oltre 1.000 IP unici dei pannelli C2.</div>
+      <div class="tl-result">
+        <span class="tl-pill ok">2 arresti Belgio</span>
+        <span class="tl-pill ok">RedLine crollato 57%→13%</span>
+        <span class="tl-pill warn">Rudometov latitante Russia</span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">MAGGIO 2025</div>
+      <div class="tl-title">Takedown LummaC2 — Microsoft DCU + DOJ + Europol</div>
+      <div class="tl-text">Operazione congiunta con Microsoft DCU (azione civile), DOJ, FBI, Europol EC3, JC3 giapponese. Supporto tecnico di ESET, Cloudflare, Bitsight e Lumen. Emesso advisory congiunto FBI-CISA AA25-141B. LummaC2 era al 31% del mercato globale.</div>
+      <div class="tl-result">
+        <span class="tl-pill ok">~2.300 domini sequestrati</span>
+        <span class="tl-pill ok">Advisory FBI-CISA AA25-141B</span>
+        <span class="tl-pill warn">"Shamel" latitante Russia</span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">NOVEMBRE 2025</div>
+      <div class="tl-title">Operazione Endgame Fase 2 — Rhadamanthys</div>
+      <div class="tl-text">Coordinata da Europol e Eurojust con 10+ paesi. Mira a Rhadamanthys, VenomRAT e botnet Elysium. Il sospettato principale di Rhadamanthys aveva accesso a 100.000 wallet crypto.</div>
+      <div class="tl-result">
+        <span class="tl-pill ok">1.025 server smantellati</span>
+        <span class="tl-pill ok">20 domini sequestrati</span>
+        <span class="tl-pill ok">1 arresto Grecia (VenomRAT)</span>
+        <span class="tl-pill warn">Principale dev non catturato</span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">OTTOBRE 2024 — SENTENZA</div>
+      <div class="tl-title">Raccoon Stealer: 5 anni di prigione</div>
+      <div class="tl-text">Mark Sokolovsky (ucraino) arrestato in Olanda nel 2022, estradato USA nel 2024, condannato a 5 anni di carcere federale con restituzione di $910.844. Nonostante l'arresto, l'operazione è stata riavviata da co-cospiratori.</div>
+      <div class="tl-result">
+        <span class="tl-pill ok">5 anni carcere USA</span>
+        <span class="tl-pill ok">$910.844 restituzione</span>
+        <span class="tl-pill warn">Operazione riavviata dai complici</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top: 48px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); padding: 28px 32px;" class="reveal">
+    <div style="font-family: var(--mono); font-size: 11px; color: var(--accent2); letter-spacing: .1em; margin-bottom: 10px;">⚠ LIMITE STRUTTURALE</div>
+    <div style="font-size: 15px; color: var(--text-dim); line-height: 1.8;">
+      Ogni takedown è temporaneo: l'infrastruttura si ricostituisce in settimane. Gli sviluppatori chiave operano da paesi senza estradizione. Il modello MaaS a <strong>50-250€/mese</strong> crea una base di utenti massiva impossibile da perseguire completamente. Nuove famiglie sostituiscono quelle smantellate in cicli continui.
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-text">
+    <strong style="color: var(--text);">// INFOSTEALER THREAT INTEL — 2026</strong><br>
+    Fonti: <a href="https://www.acn.gov.it/portale/documents/20119/551838/ACN_Infostealer.pdf" target="_blank">ACN Report Feb. 2026</a> · IBM X-Force · Flashpoint · SpyCloud · Kaspersky · Microsoft · Verizon DBIR · Europol · ESET
+  </div>
+  <div class="footer-text" style="text-align:right;">
+    Aggiornato: Febbraio 2026<br>
+    <span style="color: var(--text-muted);">Solo a scopo informativo e difensivo</span>
+  </div>
+</footer>
+
+
+<!-- AUDIO -->
+<audio id="bg-audio" loop preload="none">
+  <source src="ambient.mp3" type="audio/mpeg">
+</audio>
+
+<button id="audio-btn" title="Musica di sottofondo" onclick="toggleAudio()">
+  <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  <svg id="icon-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+</button>
+<span id="audio-label">AMBIENT TRACK</span>
+<script>
+  // Reveal on scroll
+  const audio = document.getElementById('bg-audio');
+  const btn = document.getElementById('audio-btn');
+  const iconPlay = document.getElementById('icon-play');
+  const iconPause = document.getElementById('icon-pause');
+  audio.volume = 0.25;
+  function toggleAudio() {
+    if (audio.paused) {
+      audio.play();
+      btn.classList.add('playing');
+      iconPlay.style.display = 'none';
+      iconPause.style.display = 'block';
+    } else {
+      audio.pause();
+      btn.classList.remove('playing');
+      iconPlay.style.display = 'block';
+      iconPause.style.display = 'none';
+    }
+  }
+
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Tabs
+  function showTab(id) {
+    document.querySelectorAll('.defense-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.dtab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // Bar animations on scroll
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.bar-fill').forEach(bar => {
+          const pct = bar.dataset.pct;
+          setTimeout(() => { bar.style.width = pct + '%'; }, 200);
+        });
+        barObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.reveal').forEach(el => {
+    if (el.querySelector('.bar-fill')) barObserver.observe(el);
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
