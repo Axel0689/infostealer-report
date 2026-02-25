@@ -57,6 +57,10 @@
 
   /* ── HERO ── */
   #hero {
+    background-image: url('cover.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     position: relative;
     min-height: 100vh;
     display: flex;
@@ -64,6 +68,13 @@
     justify-content: center;
     padding: 80px 60px 60px;
     overflow: hidden;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(8,10,14,.72) 0%, rgba(8,10,14,.55) 50%, rgba(8,10,14,.85) 100%);
+    z-index: 0;
   }
 
   .hero-grid {
@@ -863,7 +874,11 @@
     nav { padding: 16px 24px; }
     .nav-links { display: none; }
     section { padding: 60px 24px; }
-    #hero { padding: 80px 24px 50px; }
+    #hero {
+    background-image: url('cover.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat; padding: 80px 24px 50px; }
     .hero-stats { flex-wrap: wrap; gap: 24px; }
     .scroll-hint { left: 24px; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -898,6 +913,7 @@
 
 <!-- HERO -->
 <section id="hero" style="max-width:100%; padding: 100px 60px 80px;">
+  <div class="hero-overlay"></div>
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
   <div class="hero-glow2"></div>
